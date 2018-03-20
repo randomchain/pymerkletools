@@ -1,16 +1,14 @@
 import os
 
-from setuptools import find_packages
-from setuptools import setup
+from setuptools import setup, find_packages
 
-here = os.path.abspath(os.path.dirname(__file__))
-install_requires = [
-    "pysha3>=1.0b1; python_version<\"3.6\""
+setup_requirements = [
+    'setuptools_scm',
 ]
 
 setup(
     name='merkletools',
-    version='1.0.4',
+    use_scm_version=True,
     description='Merkle Tools',
     classifiers=[
         "Intended Audience :: Developers",
@@ -22,12 +20,12 @@ setup(
         "Topic :: Software Development :: Libraries",
         "Topic :: Software Development :: Libraries :: Python Modules"
     ],
-    url='https://github.com/Tierion/pymerkletools',
+    url='https://github.com/randomchain/pymerkletools',
     author='Eder Santana',
     keywords='merkle tree, blockchain, tierion',
     license="MIT",
     packages=find_packages(exclude=["tests"]),
     include_package_data=False,
     zip_safe=False,
-    install_requires=install_requires
+    setup_requires=setup_requirements,
 )

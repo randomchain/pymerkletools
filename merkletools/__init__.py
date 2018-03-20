@@ -1,58 +1,42 @@
 import hashlib
-import binascii
-import sys
-
-
-if sys.version_info < (3, 6):
-    try:
-        import sha3
-    except:
-        from warnings import warn
-        warn("sha3 is not working!")
 
 
 class MerkleTools(object):
     def __init__(self, hash_type="sha256"):
         hash_type = hash_type.lower()
-        if hash_type in ['sha256', 'md5', 'sha224', 'sha384', 'sha512',
-                         'sha3_256', 'sha3_224', 'sha3_384', 'sha3_512']:
+        if hash_type in hashlib.algorithms_available:
             self.hash_function = getattr(hashlib, hash_type)
         else:
             raise Exception('`hash_type` {} nor supported'.format(hash_type))
 
         self.reset_tree()
 
-    def _to_hex(self, x):
-        try:  # python3
-            return x.hex()
-        except:  # python2
-            return binascii.hexlify(x)
-
     def reset_tree(self):
-        self.leaves = list()
+        self.leaves = []
         self.levels = None
         self.is_ready = False
 
-    def add_leaf(self, values, do_hash=False):
-        self.is_ready = False
-        # check if single leaf
-        if not isinstance(values, tuple) and not isinstance(values, list):
-            values = [values]
+    def add_leaves(self, values, do_hash=False):
+        """
+        Add iterable of leaves
+        """
         for v in values:
-            if do_hash:
-                v = v.encode('utf-8')
-                v = self.hash_function(v).hexdigest()
-            v = bytearray.fromhex(v)
-            self.leaves.append(v)
+            self.add_leaf(v, do_hash=do_hash)
 
-    def get_leaf(self, index):
-        return self._to_hex(self.leaves[index])
+    def add_leaf(self, value, do_hash=False):
+        """
+        Add leaf to merkle tree
 
-    def get_leaf_count(self):
-        return len(self.leaves)
-
-    def get_tree_ready_state(self):
-        return self.is_ready
+        :param value: Hash of data, or actual data
+            can be bytes or string, but will always be converted to bytes
+        :param do_hash: Flag specifying if the value should be hashed before adding leaf
+        """
+        self.is_ready = False
+        if do_hash:
+            if not isinstance(value, bytes):
+                value = value.encode('utf-8')
+            value = self.hash_function(value).digest()
+        self.leaves.append(value)
 
     def _calculate_next_level(self):
         solo_leave = None
@@ -70,16 +54,17 @@ class MerkleTools(object):
 
     def make_tree(self):
         self.is_ready = False
-        if self.get_leaf_count() > 0:
+        if self.leaves:
             self.levels = [self.leaves, ]
             while len(self.levels[0]) > 1:
                 self._calculate_next_level()
         self.is_ready = True
 
-    def get_merkle_root(self):
+    @property
+    def merkle_root(self):
         if self.is_ready:
             if self.levels is not None:
-                return self._to_hex(self.levels[0][0])
+                return self.levels[0][0]
             else:
                 return None
         else:
@@ -100,14 +85,16 @@ class MerkleTools(object):
                 is_right_node = index % 2
                 sibling_index = index - 1 if is_right_node else index + 1
                 sibling_pos = "left" if is_right_node else "right"
-                sibling_value = self._to_hex(self.levels[x][sibling_index])
+                sibling_value = self.levels[x][sibling_index]
                 proof.append({sibling_pos: sibling_value})
                 index = int(index / 2.)
             return proof
 
     def validate_proof(self, proof, target_hash, merkle_root):
-        merkle_root = bytearray.fromhex(merkle_root)
-        target_hash = bytearray.fromhex(target_hash)
+        if isinstance(merkle_root, str):
+            merkle_root = bytes.fromhex(merkle_root)
+        if isinstance(target_hash, str):
+            target_hash = bytes.fromhex(target_hash)
         if len(proof) == 0:
             return target_hash == merkle_root
         else:
@@ -115,10 +102,10 @@ class MerkleTools(object):
             for p in proof:
                 try:
                     # the sibling is a left node
-                    sibling = bytearray.fromhex(p['left'])
+                    sibling = p['left']
                     proof_hash = self.hash_function(sibling + proof_hash).digest()
                 except:
                     # the sibling is a right node
-                    sibling = bytearray.fromhex(p['right'])
+                    sibling = p['right']
                     proof_hash = self.hash_function(proof_hash + sibling).digest()
             return proof_hash == merkle_root
