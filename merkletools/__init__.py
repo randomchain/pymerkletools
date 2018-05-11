@@ -3,11 +3,11 @@ import hashlib
 
 class MerkleTools(object):
     def __init__(self, hash_type="sha256"):
-        hash_type = hash_type.lower()
-        if hash_type in hashlib.algorithms_available:
-            self.hash_function = getattr(hashlib, hash_type)
+        self._hash_type = hash_type.lower()
+        if self._hash_type in hashlib.algorithms_available:
+            self.hash_function = getattr(hashlib, self._hash_type)
         else:
-            raise Exception('`hash_type` {} nor supported'.format(hash_type))
+            raise Exception('`hash_type` {} nor supported'.format(self._hash_type))
 
         self.reset_tree()
 
@@ -32,9 +32,9 @@ class MerkleTools(object):
         :param do_hash: Flag specifying if the value should be hashed before adding leaf
         """
         self.is_ready = False
+        if not isinstance(value, bytes):
+            value = value.encode('utf-8')
         if do_hash:
-            if not isinstance(value, bytes):
-                value = value.encode('utf-8')
             value = self.hash_function(value).digest()
         self.leaves.append(value)
 
