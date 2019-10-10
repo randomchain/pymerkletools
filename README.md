@@ -1,7 +1,4 @@
-# pymerkletools
-[![PyPI version](https://badge.fury.io/py/merkletools.svg)](https://badge.fury.io/py/merkletools) [![Build Status](https://travis-ci.org/Tierion/pymerkletools.svg?branch=master)](https://travis-ci.org/Tierion/pymerkletools)
-
-This is a Python port of [merkle-tools](https://github.com/tierion/merkle-tools).
+# Python3 fork of pymerkletools
 
 Tools for creating Merkle trees, generating merkle proofs, and verification of merkle proofs.
 
