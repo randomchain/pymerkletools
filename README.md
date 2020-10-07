@@ -1,6 +1,7 @@
 # Python3 fork of pymerkletools
 
 Tools for creating Merkle trees, generating merkle proofs, and verification of merkle proofs.
+This fork uses bytes for all the hashes.
 
 ## Installation
 
